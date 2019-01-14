@@ -46,7 +46,7 @@ public class ExtractService {
             stringBuilder.append(" " + String.join(",", fieldList));
         }
         stringBuilder.append(" FROM ").append(tableName).
-                append(" WHERE ").append(sortField).append(" > '").append(startField).append("'");
+                append(" WHERE ").append(sortField).append(" >= '").append(startField).append("'");
 
         if (filter != null && !filter.isEmpty()) {
             stringBuilder.append(" AND ").append(filter);
@@ -102,7 +102,7 @@ public class ExtractService {
                         results.add(map);
                     }
                     totalCount = totalCount + 1;
-                    if (totalCount >= configService.getLimit()) {
+                    if (configService.getLimit() != 0 && totalCount >= configService.getLimit()) {
                         break;
                     }
                 }
@@ -110,12 +110,13 @@ public class ExtractService {
                     queueService.pushExtract(results);
                 }
                 resultSet.previous();
-                if (totalCount >= configService.getLimit() || resultSet.getRow() < configService.getBlockSize()) {
+                if ((configService.getLimit() != 0 && totalCount >= configService.getLimit()) ||
+                        resultSet.getRow() < configService.getBlockSize()) {
                     break;
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.error("extract error: ", e);
         }
 
         try {
